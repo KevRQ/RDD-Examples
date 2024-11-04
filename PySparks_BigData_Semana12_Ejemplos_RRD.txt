@@ -1,0 +1,489 @@
+//////////////////////////////////Integrantes://////////////////////////////////////
+Jose Luis Jose Luis		
+Hector Salazar Valencia
+Kevin Roman Quispe
+David Bravo Belaonia
+
+******************************************************************************
+*******************************Transformaciones*******************************
+******************************************************************************
+
+--------------------
+Map
+--------------------
+
+from pyspark import SparkContext, SparkConf
+conf = SparkConf().setAppName("EjemploMap").setMaster("local[*]")
+sc = SparkContext(conf=conf)
+rdd = sc.parallelize([
+    "hola mundo",
+    "hola caceres",
+    "bienvenido al mundo de caceres",
+    "mundo es grande"
+])
+resultado = sorted(rdd.flatMap(lambda frase: frase.split())
+                    .map(lambda palabra: (palabra, 1))
+                    .reduceByKey(lambda a, b: a + b)
+                    .collect())
+print(resultado)
+sc.stop()
+
+--------------------
+Filter
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+data = [
+    (1, 'Electronics', 299.99),
+    (2, 'Furniture', 89.99),
+    (3, 'Electronics', 399.99),
+    (4, 'Clothing', 19.99),
+    (5, 'Electronics', 199.99),
+    (6, 'Furniture', 299.99),
+    (7, 'Clothing', 49.99)
+]
+rdd = sc.parallelize(data)
+filtered_rdd = rdd.filter(lambda x: x[1] == 'Electronics' and x[2] > 200)
+result = filtered_rdd.collect()
+print(result)
+
+--------------------
+FlatMap
+--------------------
+
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+products = [
+    ('Laptop', ['Electronics', 'Computers'], 1200),
+    ('Shirt', ['Clothing', 'Men'], 35),
+    ('Sofa', ['Furniture', 'Living Room'], 800),
+    ('Smartphone', ['Electronics', 'Mobile'], 900),
+    ('Book', ['Books', 'Education'], 15)
+]
+rdd = sc.parallelize(products)
+
+category_rdd = rdd.flatMap(lambda x: [(category, x[0], x[2]) for category in x[1]])
+result = sorted(category_rdd.collect())
+for item in result:
+    print(item)
+
+--------------------
+Union
+--------------------
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+store1_products = [
+    ('Laptop', 1200, 'Store1'),
+    ('Tablet', 300, 'Store1'),
+    ('Smartphone', 900, 'Store1')
+]
+store2_products = [
+    ('Laptop', 1150, 'Store2'),
+    ('Tablet', 320, 'Store2'),
+    ('Headphones', 150, 'Store2')
+]
+rdd_store1 = sc.parallelize(store1_products)
+rdd_store2 = sc.parallelize(store2_products)
+combined_rdd = rdd_store1.union(rdd_store2)
+
+result = combined_rdd.collect()
+for item in result:
+    print(item)
+
+--------------------
+intersection
+--------------------
+from pyspark import SparkContext
+
+sc = SparkContext.getOrCreate()
+store1_products = [
+    ('Laptop', 1200),
+    ('Tablet', 300),
+    ('Smartphone', 900),
+    ('Headphones', 150)
+]
+
+store2_products = [
+    ('Laptop', 1150),
+    ('Tablet', 320),
+    ('Headphones', 150),
+    ('Monitor', 250)
+]
+rdd_store1 = sc.parallelize(store1_products)
+rdd_store2 = sc.parallelize(store2_products)
+common_products_rdd = rdd_store1.intersection(rdd_store2)
+
+result = common_products_rdd.collect()
+for item in result:
+    print(item)
+
+--------------------
+Distinc
+--------------------
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+products = [
+    ('Laptop', 1200),
+    ('Tablet', 300),
+    ('Smartphone', 900),
+    ('Tablet', 300),
+    ('Laptop', 1200),
+    ('Monitor', 250),
+    ('Headphones', 150)
+]
+
+rdd = sc.parallelize(products)
+distinct_products_rdd = rdd.distinct()
+result = distinct_products_rdd.collect()
+for item in result:
+    print(item)
+
+--------------------
+groupByKey
+--------------------
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Complex GroupByKey Example").getOrCreate()
+
+data = [
+    ("Alice", 5), ("Bob", 3), ("Alice", 8), 
+    ("Bob", 4), ("Cathy", 7), ("Alice", 6), 
+    ("Cathy", 5), ("Bob", 5), ("David", 10)
+]
+rdd = spark.sparkContext.parallelize(data)
+
+grouped_rdd = rdd.groupByKey()
+
+averages = grouped_rdd.mapValues(lambda scores: sum(scores) / len(scores))
+
+result = averages.collect()
+for name, avg in result:
+    print(f"{name}: {avg:.2f}")
+
+--------------------
+reduceByKey
+--------------------
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("ReduceByKey Example").getOrCreate()
+
+data = [
+    ("Alice", 5), ("Bob", 3), ("Alice", 8), 
+    ("Bob", 4), ("Cathy", 7), ("Alice", 6), 
+    ("Cathy", 5), ("Bob", 5), ("David", 10)
+]
+rdd = spark.sparkContext.parallelize(data)
+
+reduced_rdd = rdd.reduceByKey(lambda x, y: x + y)
+
+result = reduced_rdd.collect()
+for name, total_score in result:
+    print(f"{name}: {total_score}")
+
+
+--------------------
+sortByKey
+--------------------
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("SortByKey Example").getOrCreate()
+
+data = [
+    ("Producto A", 150),
+    ("Producto B", 200),
+    ("Producto C", 100),
+    ("Producto A", 300),
+    ("Producto D", 250),
+    ("Producto C", 150),
+    ("Producto B", 50),
+    ("Producto E", 400)
+]
+
+rdd = spark.sparkContext.parallelize(data)
+
+total_sales = rdd.reduceByKey(lambda x, y: x + y)
+
+sorted_sales = total_sales.sortByKey(ascending=True)
+
+result = sorted_sales.collect()
+for product, total in result:
+    print(f"{product}: {total}")
+
+--------------------
+Join
+--------------------
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Join Example").getOrCreate()
+
+products_data = [
+    ("1", "Producto A"),
+    ("2", "Producto B"),
+    ("3", "Producto C"),
+    ("4", "Producto D")
+]
+
+sales_data = [
+    ("1", 150),
+    ("2", 200),
+    ("1", 100),
+    ("3", 50),
+    ("4", 300),
+    ("2", 250)
+]
+
+products_rdd = spark.sparkContext.parallelize(products_data)
+sales_rdd = spark.sparkContext.parallelize(sales_data)
+
+joined_rdd = sales_rdd.join(products_rdd)
+
+result = joined_rdd.collect()
+for sale_id, (quantity, product_name) in result:
+    print(f"Producto: {product_name}, Cantidad Vendida: {quantity}")
+
+--------------------
+Cogroup
+--------------------
+
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("Cogroup Example").getOrCreate()
+
+products_data = [
+    ("1", ("Producto A", 100)),
+    ("2", ("Producto B", 150)),
+    ("3", ("Producto C", 200)),
+    ("4", ("Producto D", 250))
+]
+
+sales_data = [
+    ("1", 150),
+    ("2", 200),
+    ("1", 100),
+    ("3", 50),
+    ("4", 300),
+    ("2", 250),
+    ("5", 75) 
+]
+
+products_rdd = spark.sparkContext.parallelize(products_data)
+sales_rdd = spark.sparkContext.parallelize(sales_data)
+
+cogrouped_rdd = products_rdd.cogroup(sales_rdd)
+
+result = cogrouped_rdd.collect()
+for product_id, (product_info, sales) in result:
+    product_info_list = list(product_info)
+    if product_info_list:
+        product_name, price = product_info_list[0]
+        sales_list = list(sales) 
+        print(f"Producto: {product_name}, Precio: {price}, Cantidades Vendidas: {sales_list}")
+    else:
+        print(f"Producto ID: {product_id} no tiene información.")
+
+--------------------
+Coalesce
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+data = [("ProductA", 20), ("ProductB", 30), ("ProductC", 40), ("ProductD", 50), ("ProductE", 60)]
+rdd = sc.parallelize(data, 5)  # 5 particiones iniciales
+
+print("Número de particiones antes de coalesce:", rdd.getNumPartitions())
+rdd_coalesced = rdd.coalesce(2)
+print("Número de particiones después de coalesce:", rdd_coalesced.getNumPartitions())
+result = rdd_coalesced.collect()
+for item in result:
+    print(item)
+
+**********************************************************************
+*******************************Acciones*******************************
+**********************************************************************
+
+--------------------
+Reduce
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+# Lista de productos con sus precios
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150)
+]
+rdd = sc.parallelize(products)
+prices_rdd = rdd.map(lambda x: x[1])
+total_price = prices_rdd.reduce(lambda x, y: x + y)
+print("La suma total de los precios es:", total_price)
+
+
+--------------------
+Collet
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150)
+]
+rdd = sc.parallelize(products)
+result = rdd.collect()
+print("Contenido del RDD:")
+for item in result:
+    print(item)
+
+--------------------
+Count
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150),
+    ("Keyboard", 50),
+    ("Mouse", 25)
+]
+rdd = sc.parallelize(products)
+num_elements = rdd.count()
+print("Número total de productos en el RDD:", num_elements)
+
+--------------------
+first
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150)
+]
+rdd = sc.parallelize(products)
+first_product = rdd.first()
+print("El primer producto en el RDD es:", first_produc
+
+--------------------
+Take
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150),
+    ("Keyboard", 50),
+    ("Mouse", 25)
+]
+rdd = sc.parallelize(products)
+sample_products = rdd.take(3)
+print("Los primeros 3 productos en el RDD son:")
+for product in sample_products:
+    print(product)
+
+--------------------
+SaveAsTexFile
+--------------------
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+print("\n=== Ejemplo de saveAsTextFile() ===")
+
+ventas = [
+    (f"PROD_{i}", random.randint(1, 10), random.uniform(10.0, 100.0))
+    for i in range(20)
+]
+
+ventas_rdd = sc.parallelize(ventas)
+try:
+    ventas_rdd.map(lambda x: f"Producto: {x[0]}, Cantidad: {x[1]}, Total: ${x[1] * x[2]:.2f}") \
+             .saveAsTextFile("ventas_procesadas")
+    print("Archivo de ventas guardado exitosamente")
+except Exception as e:
+    print(f"Error al guardar archivo: {e}")
+--------------------
+Max & Min
+--------------------
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+
+print("\n=== Ejemplo de max() y min() ===")
+
+precios_rdd = ventas_rdd.map(lambda x: (x[0], x[2]))
+
+precio_max = precios_rdd.max(lambda x: x[1])
+precio_min = precios_rdd.min(lambda x: x[1])
+
+print(f"Producto más caro: {precio_max[0]} con precio ${precio_max[1]:.2f}")
+print(f"Producto más barato: {precio_min[0]} con precio ${precio_min[1]:.2f}")
+
+--------------------
+CountByKey
+--------------------
+
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+datos = [
+    ("AAPL", "2023-01-01", 150),
+    ("AAPL", "2023-01-02", 152),
+    ("AAPL", "2023-01-03", 148),
+    ("GOOG", "2023-01-01", 2800),
+    ("GOOG", "2023-01-02", 2825),
+    ("TSLA", "2023-01-01", 700),
+    ("TSLA", "2023-01-02", 710),
+    ("TSLA", "2023-01-03", 695)
+]
+
+rdd = sc.parallelize(datos)
+
+conteo_por_ticker = rdd.map(lambda x: (x[0], 1)).countByKey()
+
+print("Conteo de entradas por ticker:", conteo_por_ticker)
+
+--------------------
+Foreach
+--------------------
+from pyspark import SparkContext
+sc = SparkContext.getOrCreate()
+
+products = [
+    ("Laptop", 1200),
+    ("Tablet", 300),
+    ("Smartphone", 900),
+    ("Monitor", 250),
+    ("Headphones", 150)
+]
+
+
+rdd = sc.parallelize(products)
+
+for product in rdd.collect():
+    print(f"Producto: {product[0]}, Precio: ${product[1]}")
+
